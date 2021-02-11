@@ -8,6 +8,12 @@ import OpenSSL
 import requests
 from urllib3 import exceptions
 import base64
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 client_id = '9c7dc5330ca142a691fd0959682d0761'
 client_secret = '5ff88db8af1d4b1f97828479a33b5c1e'
@@ -125,3 +131,83 @@ if __name__ == '__main__':
             track_names.append(track['track']['name'])
 
     print(len(track_names))
+    driver = webdriver.Chrome(r'E:/Program Files (x86)/Chromedriver/chromedriver.exe')
+    driver.get('https://music.amazon.de/search')
+    # driver.implicitly_wait(5)
+
+    # sign_in_button = driver.find_element_by_id('signInButton')
+    sign_in_button = WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.ID, 'signInButton'))
+    )
+    sign_in_button.click()
+
+    # """
+    email_input = driver.find_element_by_name('email')
+    password_input = driver.find_element_by_name('password')
+    submit_button = driver.find_element_by_id('signInSubmit')
+    # """
+    """
+    email_input = WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.NAME, 'email'))
+    )
+    password_input = WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.NAME, 'password'))
+    )
+    submit_button = WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.NAME, 'signInSubmit'))
+    )
+    """
+    email_input.send_keys('simon.westfechtel@gmail.com')
+    password_input.send_keys('ho9nktdoiPme5SspSQLd')
+    submit_button.click()
+
+    for song in track_names:
+        """
+        navbar_search_input = driver.find_element_by_id('navbarSearchInput')
+        """
+        # """
+        navbar_search_input = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.ID, 'navbarSearchInput'))
+        )
+        # """
+        navbar_search_input.send_keys(song)
+        navbar_search_input.send_keys(Keys.RETURN)
+
+        time.sleep(1)
+        # """
+        hydrated_elements = driver.find_elements_by_class_name('hydrated')
+        # """
+        """
+        hydrated_elements = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CLASS_NAME, 'hydrated'))
+        )
+        """
+
+        play = hydrated_elements[17]
+        play.click()
+
+        context_menu = hydrated_elements[19]
+        context_menu.click()
+
+        # """
+        add_to_playlist = driver.find_element_by_id('contextMenuOption1')
+        # """
+        """
+        add_to_playlist = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.ID, 'contextMenuOption1'))
+        )
+        """
+        add_to_playlist.click()
+
+        time.sleep(1)
+        # """
+        playlist = driver.find_element_by_class_name('col1')
+        # """
+        """
+        playlist = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CLASS_NAME, 'col1'))
+        )
+        """
+        playlist.click()
+
+    driver.quit()
