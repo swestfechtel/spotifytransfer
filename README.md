@@ -8,3 +8,9 @@ This program is designed to transfer Spotify playlists to Amazon Music Unlimited
 - [ ] Investigate use of machine learning to select the correct search results
 - [ ] Write web application
 - [ ] Publish
+
+## ML brainstorm:
+- input for model: playlist
+- model makes selections from search results and builds a virtual playlist, i.e. adds selection to a list object
+- error is difference between input and virtual playlist 
+-> try to improve result selection
