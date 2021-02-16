@@ -3,10 +3,15 @@
 This program is designed to transfer Spotify playlists to Amazon Music Unlimited. It makes use of the Spotify API to pull playlist information. Since Amazon Music does not currently have an API, the program uses selenium to automate the manual addition of songs to playlists via the Amazon Music website. 
 
 ## TODO:
-- [ ] Fix timing 
-- [ ] Add constraints for artist / look for right songname - artist combination
+- [x] Fix timing
+- [ ] Optimize timing
+- [x] Add constraints for artist / look for right songname - artist combination
+- [ ] Change how you look for right artist from _in_ to _like_
+- [ ] Add second search strategy for songs not found in first round, e.g. combine song name and artist for search term
 - [ ] Investigate spotify API for universal song identifiers to improve search results
 - [ ] Investigate use of machine learning to select the correct search results
+- [ ] Investigate use of parallelization
+- [ ] Investigate why headless approach is so slow
 - [ ] Write web application
 - [ ] Publish
 
