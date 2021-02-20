@@ -6,8 +6,9 @@ This program is designed to transfer Spotify playlists to Amazon Music Unlimited
 - [x] Fix timing
 - [ ] Optimize timing
 - [x] Add constraints for artist / look for right songname - artist combination
-- [ ] Change how you look for right artist from _in_ to _like_
+- [x] Change how you look for right artist from _in_ to _like_
 - [ ] Add second search strategy for songs not found in first round, e.g. combine song name and artist for search term
+- [ ] Skip songs already contained in playlist
 - [ ] Investigate spotify API for universal song identifiers to improve search results
 - [ ] Investigate use of machine learning to select the correct search results
 - [ ] Investigate use of parallelization

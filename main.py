@@ -16,6 +16,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.options import Options
+from difflib import SequenceMatcher
 
 client_id = '9c7dc5330ca142a691fd0959682d0761'
 client_secret = '5ff88db8af1d4b1f97828479a33b5c1e'
@@ -116,6 +117,7 @@ def fetch_playlist(authorization, playlist_id):
 
     return ret
 
+
 def get_playlists(raw):
     playlists = dict()
     for playlist in raw['items']:
@@ -130,7 +132,8 @@ def get_track_names(raw):
         for track in item['items']:
             tmp = dict()
             tmp['name'] = track['track']['name']
-            tmp['artist'] = track['track']['artists'][0]['name']
+            artists = [x['name'] for x in track['track']['artists']]
+            tmp['artists'] = artists
             track_names.append(tmp)
 
     return track_names
@@ -139,6 +142,9 @@ def get_track_names(raw):
 def setup_driver(headless=False):
     options = Options()
     options.headless = headless
+    options.add_argument('--no-proxy-server')
+    options.add_argument("--proxy-server='direct://'")
+    options.add_argument("--proxy-bypass-list=*")
     driver = webdriver.Chrome(options=options, executable_path=r'E:/Program Files (x86)/Chromedriver/chromedriver.exe')
     # driver.implicitly_wait(10)
     driver.get('https://music.amazon.de/search')
@@ -178,8 +184,12 @@ def check_top_result(song, driver, music_container):
     artist_top = span_top.find_element_by_tag_name('a')
 
     # check if (song and) artist names match
-    # if song['name'] in song_name_top.get_attribute('text') and song['artist'] in artist_top.get_attribute('text'):
-    if song['artist'] in artist_top.get_attribute('text'):
+    if (
+            any(SequenceMatcher(a=x, b=artist_top.get_attribute('text')).ratio() > 0.75 for x in song['artists'])
+            or
+            any(x in artist_top.get_attribute('text') for x in song['artists'])
+    ):
+
         # find div to hover
         div_top = shadow_root_top.find_element_by_tag_name('div')
         builder_top = ActionChains(driver)
@@ -231,7 +241,12 @@ def check_song_results(song, driver, music_container):
         artist = music_link.find_element_by_tag_name('a')
 
         # check if artist name matches
-        if song['artist'] in artist.get_attribute('text'):
+        if (
+                any(SequenceMatcher(a=x, b=artist.get_attribute('text')).ratio() > 0.75 for x in song['artists'])
+                or
+                any(x in artist.get_attribute('text') for x in song['artists'])
+        ):
+
             div = shadow_root.find_element_by_tag_name('div')
             builder.move_to_element(div).perform()
 
@@ -291,13 +306,15 @@ def transfer_songs(driver, track_names):
 
             # check top result
             try:
-                if check_top_result(song, driver, music_container): continue
+                if check_top_result(song, driver, music_container):
+                    continue
             except Exception as e:
                 pass
                 # raise e
 
             try:
-                if check_song_results(song, driver, music_container): continue
+                if check_song_results(song, driver, music_container):
+                    continue
             except Exception as e:
                 raise e
 
