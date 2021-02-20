@@ -15,8 +15,11 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
-from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from difflib import SequenceMatcher
+from tqdm import tqdm
+import pickle
 
 client_id = '9c7dc5330ca142a691fd0959682d0761'
 client_secret = '5ff88db8af1d4b1f97828479a33b5c1e'
@@ -140,12 +143,18 @@ def get_track_names(raw):
 
 
 def setup_driver(headless=False):
-    options = Options()
-    options.headless = headless
+    options = ChromeOptions()
+    # options = FirefoxOptions()
     options.add_argument('--no-proxy-server')
     options.add_argument("--proxy-server='direct://'")
-    options.add_argument("--proxy-bypass-list=*")
-    driver = webdriver.Chrome(options=options, executable_path=r'E:/Program Files (x86)/Chromedriver/chromedriver.exe')
+    options.add_argument('--proxy-bypass-list=*')
+    options.add_argument('--disable-gpu')
+    options.add_argument('--disable-extensions')
+    options.add_argument('--window-size=1920,1080')
+    if headless:
+        options.add_argument('--headless')
+    driver = webdriver.Chrome(options=options, executable_path=r'E:/Program Files (x86)/Webdriver/chromedriver.exe')
+    # driver = webdriver.Firefox(options=options, executable_path=r'E:/Program Files (x86)/Webdriver/geckodriver.exe')
     # driver.implicitly_wait(10)
     driver.get('https://music.amazon.de/search')
     return driver
@@ -276,12 +285,12 @@ def check_song_results(song, driver, music_container):
     return False
 
 
-def transfer_songs(driver, track_names):
+def transfer_songs(driver, track_names, second_search=False):
     failed_songs = []
     i = 0
     print(f"trying to add {len(track_names)} songs...")
 
-    for song in track_names:
+    for song in tqdm(track_names):
         try:
             driver.get('https://music.amazon.de/search')
 
@@ -295,7 +304,7 @@ def transfer_songs(driver, track_names):
             )
 
             # enter song name into searchbar
-            navbar_search_input.send_keys(song['name'])
+            navbar_search_input.send_keys(song['name'] if not second_search else song['name'] + ' ' + song['artists'][0])
             navbar_search_input.send_keys(Keys.RETURN)
 
             # find outer wrapper
@@ -319,16 +328,17 @@ def transfer_songs(driver, track_names):
                 raise e
 
             failed_songs.append(song)
-            print(f"failed to add song {song} due to bad search result")
+            # print(f"failed to add song {song} due to bad search result")
 
         except Exception as e:
-            print(f"failed to add song {song} due to error")
-            print(e)
+            # print(f"failed to add song {song} due to error")
+            # print(e)
             # driver.get('https://music.amazon.de/search')
             failed_songs.append(song)
             continue
 
     print(f"added {len(track_names) - len(failed_songs)} songs (out of {len(track_names)})")
+    return failed_songs
 
 
 if __name__ == '__main__':
@@ -337,6 +347,12 @@ if __name__ == '__main__':
     playlists = get_playlists(playlists_raw)
     tracks_raw = fetch_playlist(access_token, playlists['#EDMParty'])
     t_names = get_track_names(tracks_raw)
-    d = setup_driver()
+    # t_names = t_names[:50]
+    d = setup_driver(False)
     sign_in(d)
-    transfer_songs(d, t_names)
+    f_songs = transfer_songs(d, t_names)
+    if len(f_songs) > 0:
+        f_songs = transfer_songs(d, f_songs, True)
+
+    with open('outfile', 'wb') as fp:
+        pickle.dump(f_songs, fp)
